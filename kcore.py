@@ -14,8 +14,13 @@ def format_graph(graph):
 		edge = str(numbers[0]) + "\t" + str(numbers[1])
 		reversed_graph.append(edge)
 	graph = graph + reversed_graph
-	graph = sorted(graph, key = lambda x : int(x.split("\t")[0]))
-	return graph
+	indices = list(range(len(graph)))
+	indices.sort(key = lambda x: (int(graph[x].split("\t")[0]), int(graph[x].split("\t")[1])))
+	output = [0] * len(indices)
+	for i, x in enumerate(indices):
+		output[x] = i
+	graph = sorted(graph, key = lambda x : (int(x.split("\t")[0]), int(x.split("\t")[1])))	
+	return graph, output
 
 ### Finds the start and end indices of a node's neighbors.
 def find_start_and_end_indices(graph):
@@ -135,9 +140,11 @@ if __name__ == '__main__':
 		EDGENUM = int(myargs['-e'])
 	if '-o' in myargs:
 		outputfile = open(myargs['-o'], 'w')
-	graph = format_graph(original_graph)
+	graph, indices = format_graph(original_graph)
+	indices = indices[:EDGENUM]
 	edge_labels = [-1 for e in graph]
 	start_indices, end_indices = find_start_and_end_indices(graph)
+	print("RUNNING K-CORE")
 	while not is_graph_empty(edge_labels):
 		deg = find_degree(start_indices, end_indices, edge_labels)
 		cores = core(deg, start_indices, end_indices, edge_labels)
@@ -145,8 +152,9 @@ if __name__ == '__main__':
 		is_final_node = [x == mc for x in cores]
 		edge_labels = label_and_delete_edges(graph, is_final_node, edge_labels, mc)
 	original_labels = []
-	for edge in original_graph:
-		ix = graph.index(edge)
-		original_labels.append(edge_labels[ix])
+	print("RECONSTRUCTING ORIGINAL EDGE LABELS")
+	for i in indices:
+		original_labels.append(edge_labels[i])
+	print("WRITING TO FILE")
 	for label in original_labels:
 		outputfile.write("%s\n" % label)
