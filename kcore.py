@@ -1,7 +1,7 @@
 '''
 @author : Varun Bezzam for the Polo Club of Data Science
 @description : Graph Playground code for graphs represented as edge lists 
-@usage : python kcore.py -f <filename> -n <number of nodes in graph> -e <number of edges in graph>
+@usage : python kcore.py -f <input filename> -n <number of nodes in graph> -e <number of edges in graph> -o <output file name>
 '''
 import sys
 
@@ -133,6 +133,8 @@ if __name__ == '__main__':
 		NODENUM = int(myargs['-n'])
 	if '-e' in myargs:
 		EDGENUM = int(myargs['-e'])
+	if '-o' in myargs:
+		outputfile = open(myargs['-o'], 'w')
 	graph = format_graph(original_graph)
 	edge_labels = [-1 for e in graph]
 	start_indices, end_indices = find_start_and_end_indices(graph)
@@ -143,7 +145,8 @@ if __name__ == '__main__':
 		is_final_node = [x == mc for x in cores]
 		edge_labels = label_and_delete_edges(graph, is_final_node, edge_labels, mc)
 	original_labels = []
-	for ix, label in enumerate(edge_labels):
-		if graph[ix] in original_graph:
-			original_labels.append(label)
-	print(original_labels)
+	for edge in original_graph:
+		ix = graph.index(edge)
+		original_labels.append(edge_labels[ix])
+	for label in original_labels:
+		outputfile.write("%s\n" % label)
