@@ -13,6 +13,33 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+long long currentTimeMilliS = 0;
+
+long long currentTimeStamp() {
+    struct timeval te;
+    gettimeofday(&te, NULL); // get current time
+    long long milliseconds = te.tv_sec*1000LL + te.tv_usec/1000; // calculate milliseconds
+    return milliseconds;
+}
+
+void reset() {
+        currentTimeMilliS = currentTimeStamp();
+}
+
+long long getTimeElapsed() {
+    long long newTime = currentTimeStamp();
+    long long timeElapsed = newTime - currentTimeMilliS;
+    currentTimeMilliS = newTime;
+    return timeElapsed;
+}
+
+void showTimeElapsed(const char * comment) {
+    long long newTime = currentTimeStamp();
+    long long timeElapsed = newTime - currentTimeMilliS;
+    currentTimeMilliS = newTime;
+    std::cout << comment << ": " << timeElapsed << " milliseconds.\n";
+}
+
 // A struct to represent an edge in the edge list
 struct edge {
     int src;
@@ -248,6 +275,7 @@ int main(int argc, char *argv[]) {
         remove(tmpFile);
         int EDGENUM = atoi(argv[2]);
         int NODENUM = atoi(argv[3]);
+        reset();
         doubleAndReverseGraph(argv[1], tmpFile, EDGENUM);
         EDGENUM *= 2;
         int *originalIndices = new int[EDGENUM];
@@ -281,6 +309,7 @@ int main(int argc, char *argv[]) {
         for(int i = 0; i < EDGENUM; i++) {
                 originalLabels[i] = edgeLabels[originalIndices[i]];
         }
+        showTimeElapsed("Time Elapsed ");
         writeToFile(originalLabels, EDGENUM, argv[4]);
         remove(tmpFile);
         delete [] originalLabels;
