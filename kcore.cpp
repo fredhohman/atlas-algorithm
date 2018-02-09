@@ -50,14 +50,30 @@ void createMemoryMap(char *fileName) {
 }
 
 bool compareEdges(const edge& a, const edge& b) {
-        return a.src < b.src;
+        if(a.src < b.src)
+                return true;
+        if(a.src == b.src) {
+                if(a.tgt < b.tgt)
+                        return true;
+        }
+        return false;
 }
 
 // Compares indices according to their corresponding edges
 int compareByEdges(const void * a, const void * b) {
-        if ((edgeList + *(int *)a)->src < (edgeList + *(int *)b)->src) return -1;
-        if ((edgeList + *(int *)a)->src == (edgeList + *(int *)b)->src) return 0;
-        if ((edgeList + *(int *)a)->src > (edgeList + *(int *)b)->src) return 1;
+        //std::cout<<(edgeList + *(int *)a)->src<<" "<<(edgeList + *(int *)a)->tgt<<" "<<(edgeList + *(int *)b)->src<<" "<<(edgeList + *(int *)b)->tgt<<"\n";
+        if ((edgeList + *(int *)a)->src < (edgeList + *(int *)b)->src)
+                return -1;
+        if ((edgeList + *(int *)a)->src == (edgeList + *(int *)b)->src){
+                if ((edgeList + *(int *)a)->tgt < (edgeList + *(int *)b)->tgt)
+                        return -1;
+                if ((edgeList + *(int *)a)->tgt == (edgeList + *(int *)b)->tgt)
+                        return 0;
+                if ((edgeList + *(int *)a)->tgt > (edgeList + *(int *)b)->tgt)
+                        return 1;
+        }
+        if ((edgeList + *(int *)a)->src > (edgeList + *(int *)b)->src)
+                return 1;
 }
 
 // Formats the graph by sorting it and tracing original indices in the graph
@@ -105,29 +121,14 @@ void findDegree(int *edgeLabels, int EDGENUM, int NODENUM, int *degree) {
         }
 }
 
-// Finds the neighbors of any node in the graph
-std::vector <int> findNeighbors(int node, int *start, int *end, int *edgeLabels) {
-        std::vector <int> neighbors;
-        if(start[node] == 0 && end[node] == 0)
-                return neighbors;
-        else {
-                for(int i = start[node]; i <= end[node]; i++) {
-                        if(edgeLabels[i] == -1) {
-                                neighbors.push_back((edgeList + i)->tgt);
-                        }
-                }
-        }
-        return neighbors;
-}
-
 void core(int *start_indices, int *end_indices, int NODENUM, int EDGENUM, int *edgeLabels, int *deg) {
         int * vert = new int[NODENUM + 1];
         int * pos = new int[NODENUM + 1];
         std::fill_n(vert, NODENUM + 1, 0);
         std::fill_n(pos, NODENUM + 1, 0);
         int md = *std::max_element(deg, deg + NODENUM + 1);
-        int * bins = new int[md];
-        std::fill_n(bins, md, 0);
+        int * bins = new int[md + 1];
+        std::fill_n(bins, md + 1, 0);
         for(int v = 1; v <= NODENUM; v++)
                 bins[deg[v]]++;
         int start = 1;
@@ -147,9 +148,14 @@ void core(int *start_indices, int *end_indices, int NODENUM, int EDGENUM, int *e
         bins[0] = 1;
         for(int i = 1; i <= NODENUM; i++) {
                 int v = vert[i];
-                std::vector <int> neighbors = findNeighbors(v, start_indices, end_indices, edgeLabels);
-                        for(std::vector <int> ::iterator i = neighbors.begin(); i != neighbors.end(); i++) {
-                                int u = *i;
+                // Do nothing if node doesn't exist in the graph
+                if(start_indices[v] == 0 && end_indices[v] == 0) {
+                        ;
+                }
+                else {
+                        for(int i = start_indices[v]; i <= end_indices[v]; i++) {
+                            if(edgeLabels[i] == -1) {
+                                int u = (edgeList + i)->tgt;
                                 if(deg[u] > deg[v]) {
                                         int du = deg[u];
                                         int pu = pos[u];
@@ -164,7 +170,9 @@ void core(int *start_indices, int *end_indices, int NODENUM, int EDGENUM, int *e
                                         bins[du]++;
                                         deg[u]--;
                                 }
+                            }
                         }
+                }
         }
         delete [] vert;
         delete [] pos;
@@ -223,12 +231,24 @@ void doubleAndReverseGraph(char *inputFile, char *outputFile, int EDGENUM) {
         os.close();
 }
 
+void printDoubledGraph(char *fileName, int EDGENUM) {
+        std::ifstream is;
+        is.open(fileName, std::ios::in | std::ios::binary);
+        int src, tgt;
+        for(int i = 0; i < EDGENUM; i++) {
+                is.read((char *)(&src), sizeof(int));
+                is.read((char *)(&tgt), sizeof(int));
+                std::cout<<src<<"\t"<<tgt<<"\n";
+        }
+        is.close();
+}
+
 int main(int argc, char *argv[]) {
         char *tmpFile = "tmp.bin";
         remove(tmpFile);
         int EDGENUM = atoi(argv[2]);
         int NODENUM = atoi(argv[3]);
-        doubleAndReverseGraph(argv[1],tmpFile,  EDGENUM);
+        doubleAndReverseGraph(argv[1], tmpFile, EDGENUM);
         EDGENUM *= 2;
         int *originalIndices = new int[EDGENUM];
         int *edgeLabels = new int[EDGENUM];
