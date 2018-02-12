@@ -178,6 +178,7 @@ void core(int *start_indices, int *end_indices, int NODENUM, int EDGENUM, int *e
         bins[d] = bins[d - 1];
     }
     bins[0] = 1;
+    int old_src = -1, old_tgt = -1;
     for(int i = 1; i <= NODENUM; i++) {
         int v = vert[i];
         // Do nothing if node doesn't exist in the graph
@@ -187,22 +188,26 @@ void core(int *start_indices, int *end_indices, int NODENUM, int EDGENUM, int *e
         else {
             for(int i = start_indices[v]; i <= end_indices[v]; i++) {
                 if(edgeLabels[i] == -1) {
-                    int u = (edgeList + i)->tgt;
-                    if(deg[u] > deg[v]) {
-                        int du = deg[u];
-                        int pu = pos[u];
-                        int pw = bins[du];
-                        int w = vert[pw];
-                        if(u != w) {
-                            pos[u] = pw;
-                            pos[w] = pu;
-                            vert[pu] = w;
-                            vert[pw] = u;
+                    if((edgeList + i)->src != old_src || (edgeList + i)->tgt != old_tgt) {
+                        int u = (edgeList + i)->tgt;
+                        if(deg[u] > deg[v]) {
+                            int du = deg[u];
+                            int pu = pos[u];
+                            int pw = bins[du];
+                            int w = vert[pw];
+                            if(u != w) {
+                                pos[u] = pw;
+                                pos[w] = pu;
+                                vert[pu] = w;
+                                vert[pw] = u;
+                            }
+                            bins[du]++;
+                            deg[u]--;
                         }
-                        bins[du]++;
-                        deg[u]--;
                     }
                 }
+                old_src = (edgeList + i)->src;
+                old_tgt = (edgeList + i)->tgt;
             }
         }
     }
