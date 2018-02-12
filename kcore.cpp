@@ -12,6 +12,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+#define DEBUG 0
 
 long long currentTimeMilliS = 0;
 
@@ -88,7 +89,6 @@ bool compareEdges(const edge& a, const edge& b) {
 
 // Compares indices according to their corresponding edges
 int compareByEdges(const void * a, const void * b) {
-        //std::cout<<(edgeList + *(int *)a)->src<<" "<<(edgeList + *(int *)a)->tgt<<" "<<(edgeList + *(int *)b)->src<<" "<<(edgeList + *(int *)b)->tgt<<"\n";
         if ((edgeList + *(int *)a)->src < (edgeList + *(int *)b)->src)
                 return -1;
         if ((edgeList + *(int *)a)->src == (edgeList + *(int *)b)->src){
@@ -242,8 +242,11 @@ void doubleAndReverseGraph(char *inputFile, char *outputFile, int EDGENUM) {
                 is.read((char *)(&tgt), sizeof(int));
                 src = htonl(src);
                 tgt = htonl(tgt);
-                os.write((char *)&src, sizeof(int));
-                os.write((char *)&tgt, sizeof(int));
+                // Removes self loops
+                if(src != tgt) {
+                        os.write((char *)&src, sizeof(int));
+                        os.write((char *)&tgt, sizeof(int));
+                }
         }
         is.seekg(0, std::ios::beg);
         for(int i = 0; i < EDGENUM; i++) {
@@ -251,23 +254,22 @@ void doubleAndReverseGraph(char *inputFile, char *outputFile, int EDGENUM) {
                 is.read((char *)(&tgt), sizeof(int));
                 src = htonl(src);
                 tgt = htonl(tgt);
+                // Removes self loops
+                if(src != tgt) {
                 os.write((char *)(&tgt), sizeof(int));
                 os.write((char *)(&src), sizeof(int));
+                }
         }
         is.close();
         os.close();
 }
 
-void printDoubledGraph(char *fileName, int EDGENUM) {
-        std::ifstream is;
-        is.open(fileName, std::ios::in | std::ios::binary);
-        int src, tgt;
+void labelAndDeletePeelOneEdges(int *degree, int EDGENUM, int *edgeLabels) {
         for(int i = 0; i < EDGENUM; i++) {
-                is.read((char *)(&src), sizeof(int));
-                is.read((char *)(&tgt), sizeof(int));
-                std::cout<<src<<"\t"<<tgt<<"\n";
+                if((edgeLabels[i] == -1) && (degree[(edgeList + i)->src] == 1 || degree[(edgeList + i)->tgt] == 1)) {
+                        edgeLabels[i] = 1;
+                }
         }
-        is.close();
 }
 
 int main(int argc, char *argv[]) {
@@ -277,22 +279,34 @@ int main(int argc, char *argv[]) {
         int NODENUM = atoi(argv[3]);
         reset();
         doubleAndReverseGraph(argv[1], tmpFile, EDGENUM);
+        if(DEBUG)
+                std::cout<<"DOUBLED AND REVERSED GRAPH\n";
         EDGENUM *= 2;
         int *originalIndices = new int[EDGENUM];
         int *edgeLabels = new int[EDGENUM];
         std::fill_n(edgeLabels, EDGENUM, -1);
         createMemoryMap(tmpFile);
+        if(DEBUG)
+                std::cout<<"CREATED MEMORY MAP\n";
         formatGraph(EDGENUM, originalIndices);
+        if(DEBUG)
+                std::cout<<"FORMATTED GRAPH\n";
         int *start = new int[NODENUM + 1];
         int *end = new int[NODENUM + 1];
         std::fill_n(start, NODENUM + 1, 0);
         std::fill_n(end, NODENUM + 1, 0);
         findStartAndEndIndices(start, end, EDGENUM);
+        if(DEBUG)
+                std::cout<<"START AND END INDICES COMPUTED\n";
         while(!isGraphEmpty(edgeLabels, EDGENUM)) {
                 int *degree = new int[NODENUM + 1];
                 findDegree(edgeLabels, EDGENUM, NODENUM, degree);
+                //labelAndDeletePeelOneEdges(degree, EDGENUM, edgeLabels);
+                //findDegree(edgeLabels, EDGENUM, NODENUM, degree);
                 core(start, end, NODENUM, EDGENUM, edgeLabels, degree);
                 int mc = *std::max_element(degree, degree + NODENUM + 1);
+                if(DEBUG)
+                        std::cout<<"CURRENT MAXIMUM CORE : "<<mc<<"\n";
                 bool *isFinalNode = new bool[NODENUM];
                 std::fill_n(isFinalNode, NODENUM, false);
                 for(int i = 0; i <= NODENUM; i++) {
@@ -306,6 +320,8 @@ int main(int argc, char *argv[]) {
         }
         EDGENUM /= 2;
         int *originalLabels = new int[EDGENUM];
+        if(DEBUG)
+                std::cout<<"RECONSTRUCTING ORIGINAL LABELS\n";
         for(int i = 0; i < EDGENUM; i++) {
                 originalLabels[i] = edgeLabels[originalIndices[i]];
         }
