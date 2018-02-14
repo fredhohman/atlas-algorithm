@@ -133,27 +133,27 @@ void findStartAndEndIndices(int *start, int *end, int EDGENUM) {
 }
 
 // Computes the degree of each node in the graph
-void findDegree(int *edgeLabels, int EDGENUM, int NODENUM, int *degree) {
+void findDegree(int *edgeLabels, int EDGENUM, int NODENUM, float *degree) {
     std::fill_n(degree, NODENUM + 1, 0);
-    int old_src = -1, old_tgt = -1;
+    //int old_src = -1, old_tgt = -1;
     for(int i = 0; i < EDGENUM; i++) {
         // If edge hasn't been deleted yet. An edge is considered deleted
         // when it has been labeled.
         if(edgeLabels[i] == -1) {
-            if((edgeList + i)->src != old_src || (edgeList + i)->tgt != old_tgt) {
+            //if((edgeList + i)->src != old_src || (edgeList + i)->tgt != old_tgt) {
                 degree[(edgeList + i)->src]++;
                 degree[(edgeList + i)->tgt]++;
-            }
+            //}
         }
-        old_src = (edgeList + i)->src;
-        old_tgt = (edgeList + i)->tgt;
+        //old_src = (edgeList + i)->src;
+        //old_tgt = (edgeList + i)->tgt;
     }
     for(int i = 0; i < NODENUM + 1; i++) {
         degree[i] /= 2;
     }
 }
 
-void core(int *start_indices, int *end_indices, int NODENUM, int EDGENUM, int *edgeLabels, int *deg) {
+void findKCore(int *start_indices, int *end_indices, int NODENUM, int EDGENUM, int *edgeLabels, int *deg) {
     int * vert = new int[NODENUM + 1];
     int * pos = new int[NODENUM + 1];
     std::fill_n(vert, NODENUM + 1, 0);
@@ -178,7 +178,7 @@ void core(int *start_indices, int *end_indices, int NODENUM, int EDGENUM, int *e
         bins[d] = bins[d - 1];
     }
     bins[0] = 1;
-    int old_src = -1, old_tgt = -1;
+    //int old_src = -1, old_tgt = -1;
     for(int i = 1; i <= NODENUM; i++) {
         int v = vert[i];
         // Do nothing if node doesn't exist in the graph
@@ -186,10 +186,10 @@ void core(int *start_indices, int *end_indices, int NODENUM, int EDGENUM, int *e
             ;
         }
         else {
-            for(int i = start_indices[v]; i <= end_indices[v]; i++) {
-                if(edgeLabels[i] == -1) {
-                    if((edgeList + i)->src != old_src || (edgeList + i)->tgt != old_tgt) {
-                        int u = (edgeList + i)->tgt;
+            for(int j = start_indices[v]; j <= end_indices[v]; j++) {
+                if(edgeLabels[j] == -1) {
+                    //if((edgeList + j)->src != old_src || (edgeList + j)->tgt != old_tgt) {
+                        int u = (edgeList + j)->tgt;
                         if(deg[u] > deg[v]) {
                             int du = deg[u];
                             int pu = pos[u];
@@ -204,22 +204,24 @@ void core(int *start_indices, int *end_indices, int NODENUM, int EDGENUM, int *e
                             bins[du]++;
                             deg[u]--;
                         }
-                    }
+                    //}
                 }
-                old_src = (edgeList + i)->src;
-                old_tgt = (edgeList + i)->tgt;
+                //old_src = (edgeList + j)->src;
+                //old_tgt = (edgeList + j)->tgt;
             }
         }
     }
-    delete [] vert;
-    delete [] pos;
-    delete [] bins;
+   delete [] vert;
+   delete [] pos;
+   delete [] bins;
 }
 
-void labelAndDeleteEdges(bool *isFinalNode, int peel, int EDGENUM, int *edgeLabels) {
+void labelEdgesAndUpdateDegree(bool *isFinalNode, int peel, int EDGENUM, float *degree, int *edgeLabels) {
     for(int i = 0; i < EDGENUM; i++) {
         if(isFinalNode[(edgeList + i)->src] && isFinalNode[(edgeList + i)->tgt] && edgeLabels[i] == -1) {
             edgeLabels[i] = peel;
+            degree[(edgeList + i)->src] -= 0.5;
+            degree[(edgeList + i)->tgt] -= 0.5;
         }
     }
 }
@@ -308,24 +310,23 @@ int main(int argc, char *argv[]) {
     findStartAndEndIndices(start, end, EDGENUM);
     if(DEBUG)
         std::cout<<"START AND END INDICES COMPUTED\n";
+    float *degree = new float[NODENUM + 1];
+    findDegree(edgeLabels, EDGENUM, NODENUM, degree);
+    int *core = new int[NODENUM + 1];
     while(!isGraphEmpty(edgeLabels, EDGENUM)) {
-        int *degree = new int[NODENUM + 1];
-        findDegree(edgeLabels, EDGENUM, NODENUM, degree);
-        //labelAndDeletePeelOneEdges(degree, EDGENUM, edgeLabels);
-        //findDegree(edgeLabels, EDGENUM, NODENUM, degree);
-        core(start, end, NODENUM, EDGENUM, edgeLabels, degree);
-        int mc = *std::max_element(degree, degree + NODENUM + 1);
+        std::copy(degree, degree + NODENUM + 1, core);
+        findKCore(start, end, NODENUM, EDGENUM, edgeLabels, core);
+        int mc = *std::max_element(core, core + NODENUM + 1);
         if(DEBUG)
             std::cout<<"CURRENT MAXIMUM CORE : "<<mc<<"\n";
         bool *isFinalNode = new bool[NODENUM];
         std::fill_n(isFinalNode, NODENUM, false);
         for(int i = 0; i <= NODENUM; i++) {
-            if(degree[i] == mc) {
+            if(core[i] == mc) {
                 isFinalNode[i] = true;
             }
         }
-        labelAndDeleteEdges(isFinalNode, mc, EDGENUM, edgeLabels);
-        delete [] degree;
+        labelEdgesAndUpdateDegree(isFinalNode, mc, EDGENUM, degree, edgeLabels);
         delete [] isFinalNode;
     }
     EDGENUM /= 2;
@@ -338,6 +339,8 @@ int main(int argc, char *argv[]) {
     showTimeElapsed("Time Elapsed ");
     writeToFile(originalLabels, EDGENUM, argv[4]);
     remove(tmpFile);
+    delete [] core;
+    delete [] degree;
     delete [] originalLabels;
     delete [] edgeLabels;
     delete [] start;
