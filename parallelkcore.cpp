@@ -78,6 +78,24 @@ void createMemoryMap(char *fileName) {
     close(binFile);
 }
 
+// In-memory edge list instead of memory mapped file
+void createInMemoryEdgeList(char *fileName) {
+        g.edgeList = new edge[g.EDGENUM];
+        std::ifstream is;
+        is.open(fileName, std::ios::in | std::ios::binary);
+        unsigned int src, tgt;
+        unsigned int updatedEdgeNum = g.EDGENUM;
+        for(unsigned int i = 0; i < g.EDGENUM; i++) {
+                is.read((char *)(&src), sizeof(unsigned int));
+                is.read((char *)(&tgt), sizeof(unsigned int));
+                assert(src >= 0 && src <= g.NODENUM);
+                assert(tgt >= 0 && tgt <= g.NODENUM);
+                (g.edgeList + i)->src = src;
+                (g.edgeList + i)->tgt = tgt;
+        }
+        is.close();
+}
+
 void doubleAndReverseGraph(char *inputFile, char *outputFile) {
     std::ifstream is;
     is.open(inputFile, std::ios::in | std::ios::binary);
@@ -158,6 +176,7 @@ void formatGraph(unsigned int *originalIndices) {
         originalIndices[indices[i]] = i;
     }
     std::sort(g.edgeList, g.edgeList + g.EDGENUM, compareEdges);
+    //qsort(g.edgeList, g.EDGENUM, sizeof(edge), compareByEdges);
     delete [] indices;
 }
 
@@ -186,15 +205,6 @@ bool isGraphEmpty(unsigned int *edgeLabels) {
                         return false;
         }
         return true;
-}
-
-void writeToFile(unsigned int *edgeLabels, char *fileName) {
-        std::ofstream outputFile;
-        outputFile.open(fileName);
-        for(unsigned int i = 0; i < g.EDGENUM; i++) {
-                outputFile<<edgeLabels[i]<<"\n";
-        }
-        outputFile.close();
 }
 
 // Computes the degree of each node in the graph
@@ -374,6 +384,16 @@ void labelEdgesAndUpdateDegree(unsigned int peel, bool *isFinalNode, float *degr
     }
 }
 
+void writeToFile(unsigned int *edgeIndices, unsigned int *edgeLabels, char *fileName) {
+        std::ofstream outputFile;
+        outputFile.open(fileName);
+        for(unsigned int i = 0; i < g.EDGENUM; i++) {
+                outputFile<<(g.edgeList + edgeIndices[i])->src<<","<<(g.edgeList + edgeIndices[i])->tgt<<","<<edgeLabels[i]<<"\n";
+                //outputFile<<edgeLabels[i]<<"\n";
+        }
+        outputFile.close();
+}
+
 int main(int argc, char *argv[]) {
     char *tmpFile = "tmp.bin";
     remove(tmpFile);
@@ -386,6 +406,7 @@ int main(int argc, char *argv[]) {
     unsigned int *originalIndices = new unsigned int[g.EDGENUM];
     unsigned int *edgeLabels = new unsigned int[g.EDGENUM];
     std::fill_n(edgeLabels, g.EDGENUM, -1);
+    //createInMemoryEdgeList(tmpFile);
     createMemoryMap(tmpFile);
     if(DEBUG)
         std::cout<<"CREATED MEMORY MAP\n";
@@ -422,8 +443,9 @@ int main(int argc, char *argv[]) {
         originalLabels[i] = edgeLabels[originalIndices[i]];
     }
     showTimeElapsed("Time Elapsed ");
-    writeToFile(originalLabels, argv[4]);
+    writeToFile(originalIndices, originalLabels, argv[4]);
     remove(tmpFile);
+    //delete [] g.edgeList;
     delete [] core;
     delete [] degree;
     delete [] g.start_indices;
