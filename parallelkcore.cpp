@@ -361,12 +361,10 @@ void parKCore(unsigned int *deg, unsigned int *edgeLabels) {
         }
 
         level = level + 1;
-
 #pragma omp barrier
 
     }
 }
-
     delete [] curr;
     delete [] next;
 
@@ -382,6 +380,30 @@ void labelEdgesAndUpdateDegree(unsigned int peel, bool *isFinalNode, float *degr
             degree[tgt] -= 0.5;
         }
     }
+}
+
+void labelAndDeletePeelOneEdges(float *degree, unsigned int *edgeLabels) {
+    bool *peelOneEdges = new bool[g.EDGENUM];
+    std::fill_n(peelOneEdges, g.EDGENUM, false);
+    for(unsigned int i = 0; i < g.EDGENUM; i++) {
+        unsigned int src = (g.edgeList + i)->src;
+        unsigned int tgt = (g.edgeList + i)->tgt;
+        if(edgeLabels[i] == -1) {
+                if(degree[src] == 1 || degree[tgt] == 1) {
+                        peelOneEdges[i] = true;
+                }
+        }
+    }
+    for(unsigned int i = 0; i < g.EDGENUM; i++) {
+        unsigned int src = (g.edgeList + i)->src;
+        unsigned int tgt = (g.edgeList + i)->tgt;
+        if(peelOneEdges[i] == true) {
+                edgeLabels[i] = 1;
+                degree[src] -= 0.5;
+                degree[tgt] -= 0.5;
+        }
+    }
+    delete [] peelOneEdges;
 }
 
 void writeToFile(unsigned int *edgeIndices, unsigned int *edgeLabels, char *fileName) {
@@ -433,6 +455,7 @@ int main(int argc, char *argv[]) {
             }
         }
         labelEdgesAndUpdateDegree(mc, isFinalNode, degree, edgeLabels);
+        labelAndDeletePeelOneEdges(degree, edgeLabels);
         delete [] isFinalNode;
     }
     g.EDGENUM /= 2;
