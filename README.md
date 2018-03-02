@@ -2,6 +2,8 @@
 
 This is the fast, scalable implementation of [edge decomposition based on fixed points of degree peeling][edge-decomp] proposed in [Graph Playgrounds][graph-playground].
 
+For the main Graph Playgrounds repository, see [github.com/fredhohman/graph-playgrounds][graph-playground-github]
+
 ## Installation
 Download or clone this repository.
 From the directory, compile the code by 
@@ -33,11 +35,12 @@ Graph Playgrounds
 Fred Hohman, Varun Bezzam, James Abello, Duen Horng Chau.
 
 ## License
-MIT License. See `LICENSE.md`.
+MIT License. See [`LICENSE.md`](LICENSE.md).
 
 ## Credits
 For questions contact [Fred Hohman][fred].
 
 [edge-decomp]: https://link.springer.com/article/10.1007/s13278-014-0191-7
 [graph-playground]: http://fredhohman.com
+[graph-playground-github]: https://github.com/fredhohman/graph-playgrounds
 [fred]: http://fredhohman.com
