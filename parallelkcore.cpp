@@ -15,7 +15,7 @@
 #include <stdio.h>
 #include <limits.h>
 #include <omp.h>
-#define DEBUG 1
+#define DEBUG 0
 
 // A struct to represent an edge in the edge list
 struct edge {
@@ -58,13 +58,6 @@ long long getTimeElapsed() {
     long long timeElapsed = newTime - currentTimeMilliS;
     currentTimeMilliS = newTime;
     return timeElapsed;
-}
-
-void showTimeElapsed(const char * comment) {
-    long long newTime = currentTimeStamp();
-    long long timeElapsed = newTime - currentTimeMilliS;
-    currentTimeMilliS = newTime;
-    std::cout << comment << ": " << timeElapsed << " milliseconds.\n";
 }
 
 // Memory maps input file
@@ -383,36 +376,39 @@ void labelEdgesAndUpdateDegree(unsigned int peel, bool *isFinalNode, float *degr
 }
 
 void labelAndDeletePeelOneEdges(float *degree, unsigned int *edgeLabels) {
-    bool *peelOneEdges = new bool[g.EDGENUM];
-    std::fill_n(peelOneEdges, g.EDGENUM, false);
+    float *tmp = new float[g.NODENUM + 1];
+    std::copy(degree, degree + g.NODENUM + 1, tmp);
     for(unsigned int i = 0; i < g.EDGENUM; i++) {
         unsigned int src = (g.edgeList + i)->src;
         unsigned int tgt = (g.edgeList + i)->tgt;
         if(edgeLabels[i] == -1) {
-                if(degree[src] == 1 || degree[tgt] == 1) {
-                        peelOneEdges[i] = true;
+                if(tmp[src] == 1 || tmp[tgt] == 1) {
+                        edgeLabels[i] = 1;
+                        degree[src] -= 0.5;
+                        degree[tgt] -= 0.5;
                 }
         }
     }
-    for(unsigned int i = 0; i < g.EDGENUM; i++) {
-        unsigned int src = (g.edgeList + i)->src;
-        unsigned int tgt = (g.edgeList + i)->tgt;
-        if(peelOneEdges[i] == true) {
-                edgeLabels[i] = 1;
-                degree[src] -= 0.5;
-                degree[tgt] -= 0.5;
-        }
-    }
-    delete [] peelOneEdges;
+    delete [] tmp;
 }
 
-void writeToFile(unsigned int *edgeIndices, unsigned int *edgeLabels, char *fileName) {
+void writeToFile(unsigned int *edgeIndices, unsigned int *edgeLabels) {
         std::ofstream outputFile;
-        outputFile.open(fileName);
+        outputFile.open("graph-decomposition.csv");
         for(unsigned int i = 0; i < g.EDGENUM; i++) {
                 outputFile<<(g.edgeList + edgeIndices[i])->src<<","<<(g.edgeList + edgeIndices[i])->tgt<<","<<edgeLabels[i]<<"\n";
-                //outputFile<<edgeLabels[i]<<"\n";
         }
+        outputFile.close();
+}
+
+void writeMetaData(unsigned int NODENUM, unsigned int EDGENUM, long long preprocessingTime, long long algorithmTime) {
+        std::ofstream outputFile;
+        outputFile.open("graph-decomposition-info.file");
+        outputFile<<"{\n";
+        outputFile<<"\"vertices\":"<<NODENUM<<",\n";
+        outputFile<<"\"edges\":"<<EDGENUM<<",\n";
+        outputFile<<"\"preprocessing-time\":"<<preprocessingTime<<",\n";
+        outputFile<<"\"algorithm-time\":"<<algorithmTime<<"\n}";
         outputFile.close();
 }
 
@@ -428,11 +424,12 @@ int main(int argc, char *argv[]) {
     unsigned int *originalIndices = new unsigned int[g.EDGENUM];
     unsigned int *edgeLabels = new unsigned int[g.EDGENUM];
     std::fill_n(edgeLabels, g.EDGENUM, -1);
-    //createInMemoryEdgeList(tmpFile);
     createMemoryMap(tmpFile);
     if(DEBUG)
         std::cout<<"CREATED MEMORY MAP\n";
     formatGraph(originalIndices);
+    long long preprocessingTime = getTimeElapsed();
+    reset();
     if(DEBUG)
         std::cout<<"FORMATTED GRAPH\n";
     findStartAndEndIndices();
@@ -455,7 +452,6 @@ int main(int argc, char *argv[]) {
             }
         }
         labelEdgesAndUpdateDegree(mc, isFinalNode, degree, edgeLabels);
-        labelAndDeletePeelOneEdges(degree, edgeLabels);
         delete [] isFinalNode;
     }
     g.EDGENUM /= 2;
@@ -465,10 +461,10 @@ int main(int argc, char *argv[]) {
     for(unsigned int i = 0; i < g.EDGENUM; i++) {
         originalLabels[i] = edgeLabels[originalIndices[i]];
     }
-    showTimeElapsed("Time Elapsed ");
-    writeToFile(originalIndices, originalLabels, argv[4]);
+    long long algorithmTime = getTimeElapsed();
+    writeToFile(originalIndices, originalLabels);
+    writeMetaData(atoi(argv[2]), atoi(argv[3]), preprocessingTime, algorithmTime);
     remove(tmpFile);
-    //delete [] g.edgeList;
     delete [] core;
     delete [] degree;
     delete [] g.start_indices;
