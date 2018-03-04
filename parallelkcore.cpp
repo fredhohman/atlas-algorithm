@@ -31,7 +31,7 @@ struct graph {
     edge *edgeList;
 }g;
 
-// Utility function to prunsigned int a given array
+// Utility function to print a given array
 template <class T>
 void printArray(T *arr, unsigned int n) {
     for(unsigned int i = 0; i < n; i++) {
@@ -444,8 +444,8 @@ int main(int argc, char *argv[]) {
         unsigned int mc = *std::max_element(core, core + g.NODENUM + 1);
         if(DEBUG)
             std::cout<<"CURRENT MAXIMUM CORE : "<<mc<<"\n";
-        bool *isFinalNode = new bool[g.NODENUM];
-        std::fill_n(isFinalNode, g.NODENUM, false);
+        bool *isFinalNode = new bool[g.NODENUM + 1];
+        std::fill_n(isFinalNode, g.NODENUM + 1, false);
         for(unsigned int i = 0; i <= g.NODENUM; i++) {
             if(core[i] == mc) {
                 isFinalNode[i] = true;
