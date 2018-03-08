@@ -15,7 +15,7 @@
 #include <stdio.h>
 #include <limits.h>
 #include <omp.h>
-#define DEBUG 0
+#define DEBUG 1
 
 // A struct to represent an edge in the edge list
 struct edge {
@@ -463,7 +463,7 @@ int main(int argc, char *argv[]) {
     }
     long long algorithmTime = getTimeElapsed();
     writeToFile(originalIndices, originalLabels);
-    writeMetaData(atoi(argv[2]), atoi(argv[3]), preprocessingTime, algorithmTime);
+    writeMetaData(atoi(argv[3]), atoi(argv[2]), preprocessingTime, algorithmTime);
     remove(tmpFile);
     delete [] core;
     delete [] degree;

@@ -47,13 +47,6 @@ long long getTimeElapsed() {
     return timeElapsed;
 }
 
-void showTimeElapsed(const char * comment) {
-    long long newTime = currentTimeStamp();
-    long long timeElapsed = newTime - currentTimeMilliS;
-    currentTimeMilliS = newTime;
-    std::cout << comment << ": " << timeElapsed << " milliseconds.\n";
-}
-
 // Utility function to print the entire memory mapped graph
 void printGraph() {
     for(unsigned int i = 0; i < g.EDGENUM; i++) {
@@ -274,15 +267,6 @@ void findKCore(unsigned int *edgeLabels, unsigned int *deg) {
    delete [] bins;
 }
 
-void writeToFile(unsigned int *edgeLabels, char *fileName) {
-        std::ofstream outputFile;
-        outputFile.open(fileName);
-        for(unsigned int i = 0; i < g.EDGENUM; i++) {
-                outputFile<<edgeLabels[i]<<"\n";
-        }
-        outputFile.close();
-}
-
 void labelEdgesAndUpdateDegree(unsigned int peel, bool *isFinalNode, float *degree, unsigned int *edgeLabels) {
     for(unsigned int i = 0; i < g.EDGENUM; i++) {
         unsigned int src = (g.edgeList + i)->src;
@@ -293,6 +277,26 @@ void labelEdgesAndUpdateDegree(unsigned int peel, bool *isFinalNode, float *degr
             degree[tgt] -= 0.5;
         }
     }
+}
+
+void writeToFile(unsigned int *edgeIndices, unsigned int *edgeLabels) {
+        std::ofstream outputFile;
+        outputFile.open("graph-decomposition.csv");
+        for(unsigned int i = 0; i < g.EDGENUM; i++) {
+                outputFile<<(g.edgeList + edgeIndices[i])->src<<","<<(g.edgeList + edgeIndices[i])->tgt<<","<<edgeLabels[i]<<"\n";
+        }
+        outputFile.close();
+}
+
+void writeMetaData(unsigned int NODENUM, unsigned int EDGENUM, long long preprocessingTime, long long algorithmTime) {
+        std::ofstream outputFile;
+        outputFile.open("graph-decomposition-info.file");
+        outputFile<<"{\n";
+        outputFile<<"\"vertices\":"<<NODENUM<<",\n";
+        outputFile<<"\"edges\":"<<EDGENUM<<",\n";
+        outputFile<<"\"preprocessing-time\":"<<preprocessingTime<<",\n";
+        outputFile<<"\"algorithm-time\":"<<algorithmTime<<"\n}";
+        outputFile.close();
 }
 
 int main(int argc, char *argv[]) {
@@ -314,6 +318,8 @@ int main(int argc, char *argv[]) {
     formatGraph(originalIndices);
     if(DEBUG)
         std::cout<<"FORMATTED GRAPH\n";
+    long long preprocessingTime = getTimeElapsed();
+    reset();
     findStartAndEndIndices();
     if(DEBUG)
         std::cout<<"START AND END INDICES COMPUTED\n";
@@ -326,8 +332,8 @@ int main(int argc, char *argv[]) {
         unsigned int mc = *std::max_element(core, core + g.NODENUM + 1);
         if(DEBUG)
             std::cout<<"CURRENT MAXIMUM CORE : "<<mc<<"\n";
-        bool *isFinalNode = new bool[g.NODENUM];
-        std::fill_n(isFinalNode, g.NODENUM, false);
+        bool *isFinalNode = new bool[g.NODENUM + 1];
+        std::fill_n(isFinalNode, g.NODENUM + 1, false);
         for(unsigned int i = 0; i <= g.NODENUM; i++) {
             if(core[i] == mc) {
                 isFinalNode[i] = true;
@@ -343,8 +349,9 @@ int main(int argc, char *argv[]) {
     for(unsigned int i = 0; i < g.EDGENUM; i++) {
         originalLabels[i] = edgeLabels[originalIndices[i]];
     }
-    showTimeElapsed("Time Elapsed ");
-    writeToFile(originalLabels, argv[4]);
+    long long algorithmTime = getTimeElapsed();
+    writeToFile(originalIndices, originalLabels);
+    writeMetaData(atoi(argv[3]), atoi(argv[2]), preprocessingTime, algorithmTime);
     remove(tmpFile);
     delete [] core;
     delete [] degree;
