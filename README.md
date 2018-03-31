@@ -15,7 +15,7 @@ git clone https://github.com/fredhohman/atlas-algorithm.git
 From the directory, compile the code by 
 
 ```
-compile
+ g++ -o atlas-decomposition -g -fopenmp -O3 parallelkcore.cpp
 ```
 
 ## Usage
@@ -29,15 +29,17 @@ We first convert a plain text edge list file to a `.bin` to use for algorithm. I
 ...
 ```
 
-Convert the text edge list to a `.bin` using
+Convert the text edge list to a `.bin` using the mmap.jar file available here : http://poloclub.gatech.edu/mmap/MMap.zip
 
 ```
-text to bin
+java -jar mmap.jar Convert <input file>
 ```
 
-The algorithm takes in this `.bin` file to perform the decomposition. It outputs a `.csv` file where each row contains three values: the `source`, `target`, and `peel`. The `source` and `target` columns together form the original edge list, and the new column `peel` contains the peel assignment, i.e., what layer an edge belongs to.
-
-
+The algorithm takes in this `.bin` file to perform the decomposition. It outputs a `graph-decomposition.csv` file where each row contains three values: the `source`, `target`, and `peel`. The `source` and `target` columns together form the original edge list, and the new column `peel` contains the peel assignment, i.e., what layer an edge belongs to. To run the algorithm, use:
+```
+./atlas-decomposition <input file>.bin <# of edges> <# of nodes> 
+```
+It also outputs a `graph-decomposition-info.json` file that contains metadata such as the number of nodes in the graph, number of edges in the graph, time taken to preprocess the data, and time taken to run the algorithm.
 ## License
 
 MIT License. See [`LICENSE.md`](LICENSE.md).

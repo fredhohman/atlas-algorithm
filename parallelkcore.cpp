@@ -403,7 +403,7 @@ void writeToFile(unsigned int *edgeIndices, unsigned int *edgeLabels) {
 
 void writeMetaData(unsigned int NODENUM, unsigned int EDGENUM, long long preprocessingTime, long long algorithmTime) {
         std::ofstream outputFile;
-        outputFile.open("graph-decomposition-info.file");
+        outputFile.open("graph-decomposition-info.json");
         outputFile<<"{\n";
         outputFile<<"\"vertices\":"<<NODENUM<<",\n";
         outputFile<<"\"edges\":"<<EDGENUM<<",\n";
