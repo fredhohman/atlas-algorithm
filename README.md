@@ -22,7 +22,7 @@ From the directory, compile the code by
 
 ## Usage
 
-We first convert a plain text edge list file to a `.bin` to use for algorithm. Input text files should be comma (or tab) separated where each row contains a `source` and `target` (these must be numbesr). For example, a graph with three edges would look like:
+We first convert a plain text edge list file to a `.bin` to use for algorithm. Input text files should be comma (or tab) separated where each row contains a `source` and `target` (these must be numbers). For example, a graph with three edges would look like:
 
 ```
 1, 2
@@ -62,4 +62,4 @@ For questions contact [Fred Hohman][fred].
 [edge-decomp]: https://link.springer.com/article/10.1007/s13278-014-0191-7
 [atlas]: https://github.com/fredhohman/atlas
 [fred]: http://fredhohman.com
-[example]: https://github.com/fredhohman/atlas/data
+[example]: https://github.com/fredhohman/atlas/tree/master/data
