@@ -57,9 +57,10 @@ MIT License. See [`LICENSE.md`](LICENSE.md).
 
 ## Contact
 
-For questions contact [Fred Hohman][fred].
+For questions or support [open an issue][issues] or contact [Fred Hohman][fred].
 
 [edge-decomp]: https://link.springer.com/article/10.1007/s13278-014-0191-7
 [atlas]: https://github.com/fredhohman/atlas
 [fred]: http://fredhohman.com
 [example]: https://github.com/fredhohman/atlas/tree/master/data
+[issues]: https://github.com/fredhohman/atlas-algorithm/issues
