@@ -22,7 +22,14 @@ From the directory, compile the code by
 
 ## Usage
 
-We first convert a plain text edge list file to a `.bin` to use for algorithm. Input text files should be comma (or tab) separated where each row contains a `source` and `target` (these must be numbers). For example, a graph with three edges would look like:
+We first convert a plain text edge list file to a `.bin` to use for algorithm. Input text files should be comma (or tab) separated where each row contains a `source` and `target` (these must be numbers).
+
+**Note:** graphs should not have:
+
+* self-loops / self-edges
+* duplicate edges (multi-graph)
+
+For example, a graph with three edges would look like:
 
 ```
 1, 2
