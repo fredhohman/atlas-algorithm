@@ -57,6 +57,24 @@ It also outputs a `myGraph-decomposition-info.json` file that contains metadata 
 For an example of what the output looks like, see [github.com/fredhohman/atlas/data][example]
 
 
+## Citation
+
+**[Atlas: Local Graph Exploration in a Global Context](https://fredhohman.com/papers/atlas)**  
+James Abello\*, Fred Hohman\*, Varun Bezzam, Duen Horng (Polo) Chau  
+*ACM Conference on Intelligent User Interfaces (IUI). Los Angeles, CA, USA, 2019.*  
+\* Authors contributed equally.
+
+```
+@inproceedings{hohman2019atlas,
+  title={Atlas: Local Graph Exploration in a Global Context},
+  author={Abello, James and Hohman, Fred and Bezzam, Varun and Chau, Duen Horng},
+  booktitle={Proceedings of the International Conference on Intelligent User Interfaces},
+  year={2019},
+  organization={ACM}
+}
+```
+
+
 ## License
 
 MIT License. See [`LICENSE.md`](LICENSE.md).
